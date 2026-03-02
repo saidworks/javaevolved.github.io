@@ -30,14 +30,51 @@ jobs:
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+
+      - name: Detect changed paths
+        id: changes
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "generate=true" >> "$GITHUB_OUTPUT"
+            echo "og=true" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+            # Generator JAR was rebuilt — regenerate HTML, skip OG
+            echo "generate=true" >> "$GITHUB_OUTPUT"
+            echo "og=false" >> "$GITHUB_OUTPUT"
+          else
+            # Push event — check which files changed
+            CHANGED=$(git diff --name-only HEAD~1 HEAD)
+            echo "Changed files:"
+            echo "$CHANGED"
+
+            NEEDS_GENERATE=false
+            NEEDS_OG=false
+
+            if echo "$CHANGED" | grep -qE '^(content/|translations/|templates/)'; then
+              NEEDS_GENERATE=true
+              NEEDS_OG=true
+            fi
+            if echo "$CHANGED" | grep -qE '^html-generators/generateog\.java$'; then
+              NEEDS_OG=true
+            fi
+
+            echo "generate=$NEEDS_GENERATE" >> "$GITHUB_OUTPUT"
+            echo "og=$NEEDS_OG" >> "$GITHUB_OUTPUT"
+          fi
+          echo "Summary: generate=${{ steps.changes.outputs.generate || 'pending' }}, og=${{ steps.changes.outputs.og || 'pending' }}"
 
       - uses: actions/setup-java@v5
+        if: steps.changes.outputs.generate == 'true' || steps.changes.outputs.og == 'true'
         with:
           distribution: 'temurin'
           java-version: '25'
 
+      # --- HTML generation (content/templates/translations changed) ---
       - name: Restore cached generate JAR and AOT
         id: cache-restore
+        if: steps.changes.outputs.generate == 'true'
         uses: actions/cache/restore@v5
         with:
           path: |
@@ -46,19 +83,21 @@ jobs:
           key: generator-${{ hashFiles('html-generators/generate.java') }}
 
       - name: Generate HTML with cached JAR + AOT
-        if: steps.cache-restore.outputs.cache-hit == 'true'
+        if: steps.changes.outputs.generate == 'true' && steps.cache-restore.outputs.cache-hit == 'true'
         run: java -XX:AOTCache=html-generators/generate.aot -jar html-generators/generate.jar
 
       - name: Setup JBang (cache miss)
-        if: steps.cache-restore.outputs.cache-hit != 'true'
+        if: steps.changes.outputs.generate == 'true' && steps.cache-restore.outputs.cache-hit != 'true'
         uses: jbangdev/setup-jbang@main
 
       - name: Generate HTML with JBang (cache miss)
-        if: steps.cache-restore.outputs.cache-hit != 'true'
+        if: steps.changes.outputs.generate == 'true' && steps.cache-restore.outputs.cache-hit != 'true'
         run: jbang html-generators/generate.java
 
+      # --- OG card generation (content/templates/translations or generateog.java changed) ---
       - name: Restore cached generateog JAR and AOT
         id: cache-restore-og
+        if: steps.changes.outputs.og == 'true'
         uses: actions/cache/restore@v5
         with:
           path: |
@@ -67,11 +106,11 @@ jobs:
           key: generateog-${{ hashFiles('html-generators/generateog.java') }}
 
       - name: Generate OG cards with cached JAR + AOT
-        if: steps.cache-restore-og.outputs.cache-hit == 'true'
+        if: steps.changes.outputs.og == 'true' && steps.cache-restore-og.outputs.cache-hit == 'true'
         run: java -XX:AOTCache=html-generators/generateog.aot -jar html-generators/generateog.jar
 
       - name: Generate OG cards with JBang (cache miss)
-        if: steps.cache-restore-og.outputs.cache-hit != 'true'
+        if: steps.changes.outputs.og == 'true' && steps.cache-restore-og.outputs.cache-hit != 'true'
         run: |
           if ! command -v jbang &> /dev/null; then
             echo "Installing JBang..."
