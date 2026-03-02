@@ -31,34 +31,32 @@ UPDATE_MD=false
 # Helpers
 # ---------------------------------------------------------------------------
 measure() {
-  local t
-  t=$( { /usr/bin/time -p "$@" > /dev/null; } 2>&1 | awk '/^real/ {print $2}' )
-  # Verify the command actually succeeded
-  if ! "$@" > /dev/null 2>&1; then
+  local start end
+  start=$(python3 -c "import time; print(time.time())")
+  if "$@" > /dev/null 2>&1; then
+    end=$(python3 -c "import time; print(time.time())")
+    python3 -c "print(f'{$end - $start:.2f}')"
+  else
     echo "FAIL"
-    return 1
   fi
-  echo "$t"
 }
 
 avg_runs() {
   local n="$1"; shift
-  local sum=0 failures=0
+  local sum=0 success=0
   for ((i = 1; i <= n; i++)); do
     local t
-    t=$(measure "$@") || true
-    if [[ "$t" == "FAIL" ]]; then
-      ((failures++)) || true
-      continue
+    t=$(measure "$@")
+    if [[ "$t" != "FAIL" ]]; then
+      sum=$(echo "$sum + $t" | bc)
+      success=$((success + 1))
     fi
-    sum=$(echo "$sum + $t" | bc)
   done
-  local success=$((n - failures))
   if [[ $success -eq 0 ]]; then
     echo "FAIL"
-    return 0
+  else
+    echo "scale=2; $sum / $success" | bc | sed 's/^\./0./'
   fi
-  echo "scale=2; $sum / $success" | bc | sed 's/^\./0./'
 }
 
 # ---------------------------------------------------------------------------
@@ -70,7 +68,7 @@ JAVA_VER=$(java -version 2>&1 | head -1 | sed 's/.*"\(.*\)".*/\1/')
 JBANG_VER=$(jbang version 2>/dev/null || echo "n/a")
 PYTHON_VER=$(python3 --version 2>/dev/null | awk '{print $2}' || echo "n/a")
 OS=$(uname -s)
-SNIPPET_COUNT=$(find content -name '*.json' | wc -l | tr -d ' ')
+SNIPPET_COUNT=$(find content \( -name '*.json' -o -name '*.yaml' -o -name '*.yml' \) -not -name 'template.*' | wc -l | tr -d ' ')
 
 echo ""
 echo "Environment: $CPU · $RAM · Java $JAVA_VER · $OS"
