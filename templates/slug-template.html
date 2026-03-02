@@ -12,7 +12,9 @@
   <script>
     (function(){var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');document.documentElement.setAttribute('data-theme',t);})();
   </script>
-  <link rel="icon" href="{{basePrefix}}favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="{{basePrefix}}favicon.ico" sizes="any">
+  <link rel="icon" href="{{basePrefix}}favicon-192.png" type="image/png" sizes="192x192">
+  <link rel="apple-touch-icon" href="{{basePrefix}}apple-touch-icon.png">
   <link rel="manifest" href="{{basePrefix}}manifest.json">
   <meta name="theme-color" content="#f97316">
   <meta name="mobile-web-app-capable" content="yes">
