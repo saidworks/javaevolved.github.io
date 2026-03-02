@@ -11,7 +11,7 @@ whyModernWins:
 - icon: "🚫"
   title: কোনো এস্কেপ হেল (No Escape Hell) নেই
   desc: এমবেডেড কোটগুলোতে ব্যাকস্ল্যাশ এস্কেপিংয়ের (backslash escaping) প্রয়োজন হয় না।
-- icon: " 📐"
+- icon: "📐"
   title: স্মার্ট ইন্ডেন্টেশন (Smart Indentation)
   desc: ক্লোজিং ডিলিমিটার পজিশনের (closing delimiter position) উপর ভিত্তি করে লিডিং হোয়াইটস্পেস (leading whitespace) স্বয়ংক্রিয়ভাবে ছাঁটা হয়।
 support:

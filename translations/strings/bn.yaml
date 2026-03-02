@@ -26,10 +26,14 @@ sections:
   jdkSupport: JDK সমর্থন
   howItWorks: কীভাবে কাজ করে
   relatedDocs: সম্পর্কিত ডকুমেন্টেশন
+  proof: প্রমাণ
+  proofLink: প্রমাণ সোর্স দেখুন
   relatedPatterns: সম্পর্কিত প্যাটার্ন
 filters:
   show: 'দেখান:'
   all: সব
+  jdk: 'JDK:'
+  category: 'বিভাগ:'
 difficulty:
   beginner: প্রাথমিক
   intermediate: মধ্যম
@@ -48,6 +52,7 @@ cards:
   hoverHint: আধুনিক দেখতে হোভার করুন →
   hoverHintRelated: আধুনিক দেখতে হোভার করুন ➜
   touchHint: 👆 ট্যাপ বা সোয়াইপ করুন →
+  learnMore: আরও জানুন
 copy:
   copy: কপি
   copied: কপি হয়েছে!
