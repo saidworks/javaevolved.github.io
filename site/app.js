@@ -203,7 +203,6 @@
      ========================================================== */
   const initFilters = () => {
     const pills = document.querySelectorAll('#categoryFilter .filter-pill');
-    const jdkPills = document.querySelectorAll('#jdkFilter .filter-pill');
     const cards = document.querySelectorAll('.tip-card');
     if (!pills.length || !cards.length) return;
 
@@ -257,20 +256,50 @@
       });
     });
 
-    jdkPills.forEach(pill => {
-      pill.addEventListener('click', () => {
-        const version = pill.dataset.jdkFilter || 'all';
-        const wasActive = pill.classList.contains('active');
+    // JDK Dropdown
+    const jdkDropdown = document.getElementById('jdkDropdown');
+    if (jdkDropdown) {
+      const toggleBtn = jdkDropdown.querySelector('.jdk-dropdown-toggle');
+      const labelEl = jdkDropdown.querySelector('.jdk-label');
+      const list = jdkDropdown.querySelector('ul');
 
-        // Update active JDK pill (toggle off if re-clicked)
-        jdkPills.forEach(p => p.classList.remove('active'));
-        if (!wasActive) pill.classList.add('active');
+      const openDropdown = () => {
+        list.style.display = 'block';
+        toggleBtn.setAttribute('aria-expanded', 'true');
+      };
 
-        activeJdk = (!wasActive && version !== 'all') ? version : null;
+      const closeDropdown = () => {
+        list.style.display = 'none';
+        toggleBtn.setAttribute('aria-expanded', 'false');
+      };
 
-        applyFilters();
+      toggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        list.style.display === 'block' ? closeDropdown() : openDropdown();
       });
-    });
+
+      document.addEventListener('click', closeDropdown);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeDropdown();
+      });
+
+      list.querySelectorAll('li').forEach(li => {
+        li.addEventListener('click', (e) => {
+          e.stopPropagation();
+          closeDropdown();
+
+          const version = li.dataset.jdkFilter;
+          list.querySelectorAll('li').forEach(l => l.classList.remove('active'));
+          li.classList.add('active');
+
+          activeJdk = version !== 'all' ? version : null;
+          if (labelEl) labelEl.textContent = li.textContent.trim();
+          toggleBtn.classList.toggle('has-filter', !!activeJdk);
+
+          applyFilters();
+        });
+      });
+    }
 
     // Apply filter from a given category string (or "all" / empty for no filter)
     const applyHashFilter = (category) => {

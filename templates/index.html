@@ -233,7 +233,6 @@
       <h2 class="section-title">{{site.allComparisons}}</h2>
       <span class="section-badge">{{site.snippetsBadge}}</span>
     </div>
-    <div class="filter-group">
     <div class="filter-pills" id="categoryFilter">
       <span class="filter-label">{{filters.show}}</span>
       <button class="filter-pill" data-filter="all">{{filters.all}}</button>
@@ -249,16 +248,19 @@
       <button class="filter-pill" data-filter="tooling">Tooling</button>
       <button class="filter-pill" data-filter="enterprise">Enterprise</button>
     </div>
-    <div class="filter-pills" id="jdkFilter">
-      <span class="filter-label">{{filters.jdk}}</span>
-      <button class="filter-pill" data-jdk-filter="all">{{filters.all}}</button>
-      <button class="filter-pill" data-jdk-filter="11">Java 11</button>
-      <button class="filter-pill" data-jdk-filter="17">Java 17</button>
-      <button class="filter-pill" data-jdk-filter="21">Java 21</button>
-      <button class="filter-pill" data-jdk-filter="25">Java 25</button>
-    </div>
-    </div>
     <div class="view-toggle-wrap">
+      <div class="jdk-dropdown" id="jdkDropdown">
+        <button class="jdk-dropdown-toggle" aria-haspopup="listbox" aria-expanded="false">
+          {{filters.jdk}} <span class="jdk-label">{{filters.all}}</span> <span class="dropdown-caret">▾</span>
+        </button>
+        <ul role="listbox">
+          <li data-jdk-filter="all" class="active">{{filters.all}}</li>
+          <li data-jdk-filter="11">Java 11</li>
+          <li data-jdk-filter="17">Java 17</li>
+          <li data-jdk-filter="21">Java 21</li>
+          <li data-jdk-filter="25">Java 25</li>
+        </ul>
+      </div>
       <button class="view-toggle-btn" id="viewToggle" aria-label="Toggle view mode">
         <span class="view-toggle-icon">⊞</span>
         <span class="view-toggle-text">{{view.expandAll}}</span>
