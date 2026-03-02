@@ -1,6 +1,6 @@
 # Generator Benchmarks
 
-Performance comparison of execution methods for the HTML generator, measured on 95 snippets across 10 categories.
+Performance comparison of execution methods for the HTML and OG card generators, measured on 112 snippets across 11 categories.
 
 ## CI Benchmark (GitHub Actions)
 

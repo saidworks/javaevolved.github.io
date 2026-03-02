@@ -1,4 +1,4 @@
-name: Benchmark Generator
+name: Benchmark Generators
 
 on:
   workflow_dispatch:
@@ -28,11 +28,16 @@ jobs:
         with:
           python-version: '3.13'
 
+      - name: Install Python dependencies
+        run: pip install pyyaml cairosvg
+
       - name: Run benchmark
         shell: bash
         run: |
           JAR="html-generators/generate.jar"
           AOT="html-generators/generate.aot"
+          OG_JAR="html-generators/generateog.jar"
+          OG_AOT="html-generators/generateog.aot"
           STEADY_RUNS=5
 
           snippet_count=$(find content -name '*.json' | wc -l | tr -d ' ')
@@ -61,18 +66,31 @@ jobs:
           echo "Running benchmark on $os_name (Java $java_ver, $snippet_count snippets)..."
 
           # --- Phase 1: Training / build cost ---
-          rm -f "$JAR" "$AOT"
+          rm -f "$JAR" "$AOT" "$OG_JAR" "$OG_AOT"
           find html-generators -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true
 
+          # HTML generator
           PY_TRAIN=$(measure python3 html-generators/generate.py)
           JBANG_EXPORT=$(measure jbang export fatjar --force --output "$JAR" html-generators/generate.java)
           AOT_TRAIN=$(measure java -XX:AOTCacheOutput="$AOT" -jar "$JAR")
 
+          # OG generator
+          OG_PY_TRAIN=$(measure python3 html-generators/generateog.py)
+          OG_JBANG_EXPORT=$(measure jbang export fatjar --force --output "$OG_JAR" html-generators/generateog.java)
+          OG_AOT_TRAIN=$(measure java -XX:AOTCacheOutput="$OG_AOT" -jar "$OG_JAR")
+
           # --- Phase 2: Steady-state execution ---
+          # HTML generator
           PY_STEADY=$(avg_runs $STEADY_RUNS python3 html-generators/generate.py)
           JBANG_STEADY=$(avg_runs $STEADY_RUNS jbang html-generators/generate.java)
           JAR_STEADY=$(avg_runs $STEADY_RUNS java -jar "$JAR")
           AOT_STEADY=$(avg_runs $STEADY_RUNS java -XX:AOTCache="$AOT" -jar "$JAR")
+
+          # OG generator
+          OG_PY_STEADY=$(avg_runs $STEADY_RUNS python3 html-generators/generateog.py)
+          OG_JBANG_STEADY=$(avg_runs $STEADY_RUNS jbang html-generators/generateog.java)
+          OG_JAR_STEADY=$(avg_runs $STEADY_RUNS java -jar "$OG_JAR")
+          OG_AOT_STEADY=$(avg_runs $STEADY_RUNS java -XX:AOTCache="$OG_AOT" -jar "$OG_JAR")
 
           # Write to GitHub Actions Job Summary
           {
@@ -80,7 +98,9 @@ jobs:
             echo ""
             echo "Java $java_ver · $snippet_count snippets"
             echo ""
-            echo "### Phase 1: Training / Build Cost (one-time)"
+            echo "### HTML Generator"
+            echo ""
+            echo "#### Phase 1: Training / Build Cost (one-time)"
             echo ""
             echo "| Step | Time | What it does |"
             echo "|------|------|-------------|"
@@ -88,7 +108,7 @@ jobs:
             echo "| JBang export | ${JBANG_EXPORT}s | Compiles source + bundles dependencies into fat JAR |"
             echo "| AOT training run | ${AOT_TRAIN}s | Runs JAR once to record class loading, produces \`.aot\` cache |"
             echo ""
-            echo "### Phase 2: Steady-State Execution (avg of $STEADY_RUNS runs)"
+            echo "#### Phase 2: Steady-State Execution (avg of $STEADY_RUNS runs)"
             echo ""
             echo "| Method | Avg Time |"
             echo "|--------|---------|"
@@ -96,6 +116,25 @@ jobs:
             echo "| **Fat JAR** | ${JAR_STEADY}s |"
             echo "| **JBang** | ${JBANG_STEADY}s |"
             echo "| **Python** | ${PY_STEADY}s |"
+            echo ""
+            echo "### OG Card Generator"
+            echo ""
+            echo "#### Phase 1: Training / Build Cost (one-time)"
+            echo ""
+            echo "| Step | Time | What it does |"
+            echo "|------|------|-------------|"
+            echo "| Python first run | ${OG_PY_TRAIN}s | Interprets source, generates SVG+PNG via cairosvg |"
+            echo "| JBang export | ${OG_JBANG_EXPORT}s | Compiles source + bundles Batik dependencies into fat JAR |"
+            echo "| AOT training run | ${OG_AOT_TRAIN}s | Runs JAR once to record class loading, produces \`.aot\` cache |"
+            echo ""
+            echo "#### Phase 2: Steady-State Execution (avg of $STEADY_RUNS runs)"
+            echo ""
+            echo "| Method | Avg Time |"
+            echo "|--------|---------|"
+            echo "| **Fat JAR + AOT** | **${OG_AOT_STEADY}s** |"
+            echo "| **Fat JAR** | ${OG_JAR_STEADY}s |"
+            echo "| **JBang** | ${OG_JBANG_STEADY}s |"
+            echo "| **Python** | ${OG_PY_STEADY}s |"
           } >> "$GITHUB_STEP_SUMMARY"
 
   # ---------------------------------------------------------------------------
@@ -119,10 +158,12 @@ jobs:
 
       - uses: jbangdev/setup-jbang@main
 
-      - name: Build fat JAR and AOT cache
+      - name: Build fat JARs and AOT caches
         run: |
           jbang export fatjar --force --output html-generators/generate.jar html-generators/generate.java
           java -XX:AOTCacheOutput=html-generators/generate.aot -jar html-generators/generate.jar
+          jbang export fatjar --force --output html-generators/generateog.jar html-generators/generateog.java
+          java -XX:AOTCacheOutput=html-generators/generateog.aot -jar html-generators/generateog.jar
 
       - name: Upload JAR and AOT
         uses: actions/upload-artifact@v4
@@ -131,6 +172,8 @@ jobs:
           path: |
             html-generators/generate.jar
             html-generators/generate.aot
+            html-generators/generateog.jar
+            html-generators/generateog.aot
 
   ci-cold-start:
     needs: build-jar
@@ -150,6 +193,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+
+      - name: Install Python dependencies
+        run: pip install pyyaml cairosvg
 
       - name: Download JAR and AOT
         uses: actions/download-artifact@v4
@@ -172,21 +218,38 @@ jobs:
           }
 
           # Everything is cold: no __pycache__, no JBang cache, fresh JVM
+
+          # HTML generator
           PY_CI=$(measure python3 html-generators/generate.py)
           JAR_CI=$(measure java -jar html-generators/generate.jar)
           AOT_CI=$(measure java -XX:AOTCache=html-generators/generate.aot -jar html-generators/generate.jar)
+
+          # OG generator
+          OG_PY_CI=$(measure python3 html-generators/generateog.py)
+          OG_JAR_CI=$(measure java -jar html-generators/generateog.jar)
+          OG_AOT_CI=$(measure java -XX:AOTCache=html-generators/generateog.aot -jar html-generators/generateog.jar)
 
           {
             echo "## CI Cold Start — \`$os_name\`"
             echo ""
             echo "Java $java_ver · $snippet_count snippets"
             echo ""
-            echo "Fresh runner, no caches. JAR and AOT restored from artifact"
+            echo "Fresh runner, no caches. JARs and AOT restored from artifact"
             echo "(simulates actions cache restore in deploy workflow)."
+            echo ""
+            echo "### HTML Generator"
             echo ""
             echo "| Method | Time |"
             echo "|--------|------|"
             echo "| **Fat JAR + AOT** | **${AOT_CI}s** |"
             echo "| **Fat JAR** | ${JAR_CI}s |"
             echo "| **Python** | ${PY_CI}s |"
+            echo ""
+            echo "### OG Card Generator"
+            echo ""
+            echo "| Method | Time |"
+            echo "|--------|------|"
+            echo "| **Fat JAR + AOT** | **${OG_AOT_CI}s** |"
+            echo "| **Fat JAR** | ${OG_JAR_CI}s |"
+            echo "| **Python** | ${OG_PY_CI}s |"
           } >> "$GITHUB_STEP_SUMMARY"
