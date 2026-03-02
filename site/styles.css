@@ -1414,6 +1414,15 @@ nav {
   transition: background 0.15s;
 }
 
+.search-result > div:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.search-result > .badge {
+  flex-shrink: 0;
+}
+
 .search-result:hover,
 .search-result.selected {
   background: var(--surface-2);
