@@ -487,6 +487,7 @@ String generateHtml(Templates tpl, Snippet s, Map<String, Snippet> all, Map<Stri
             Map.entry("supportBadge", supportBadge(s.supportState(), extraTokens)),
             Map.entry("supportBadgeClass", supportBadgeClass(s.supportState())),
             Map.entry("canonicalUrl", canonicalUrl),
+            Map.entry("ogImage", "%s/og/%s/%s.png".formatted(BASE_URL, s.category(), s.slug())),
             Map.entry("flatUrl", "%s/%s.html".formatted(BASE_URL, s.slug())),
             Map.entry("titleJson", jsonEscape(s.title())), Map.entry("summaryJson", jsonEscape(s.summary())),
             Map.entry("categoryDisplayJson", jsonEscape(s.catDisplay())),
