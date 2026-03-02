@@ -1,4 +1,4 @@
-name: Build Generator JAR
+name: Build Generator JARs
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/workflows/build-generator.yml'
       - 'html-generators/generate.java'
+      - 'html-generators/generateog.java'
   schedule:
     - cron: '0 6 * * 1'   # every Monday at 06:00 UTC
   workflow_dispatch:
@@ -15,7 +16,7 @@ permissions:
   actions: write
 
 jobs:
-  build:
+  build-generate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -40,3 +41,29 @@ jobs:
             html-generators/generate.jar
             html-generators/generate.aot
           key: generator-${{ hashFiles('html-generators/generate.java') }}
+
+  build-generateog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+
+      - uses: jbangdev/setup-jbang@main
+
+      - name: Build fat JAR
+        run: jbang export fatjar --force --output html-generators/generateog.jar html-generators/generateog.java
+
+      - name: Build AOT cache
+        run: java -XX:AOTCacheOutput=html-generators/generateog.aot -jar html-generators/generateog.jar
+
+      - name: Save to cache
+        uses: actions/cache/save@v5
+        with:
+          path: |
+            html-generators/generateog.jar
+            html-generators/generateog.aot
+          key: generateog-${{ hashFiles('html-generators/generateog.java') }}
