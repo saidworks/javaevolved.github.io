@@ -40,7 +40,7 @@ TRANSLATABLE_FIELDS = {
 def _load_properties(path):
     """Load a .properties file into an OrderedDict, preserving insertion order."""
     props = OrderedDict()
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line or line.startswith("#"):
@@ -70,7 +70,7 @@ def _find_with_extensions(directory, base_name):
 
 def _read_auto(path):
     """Read a JSON or YAML file based on its extension."""
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         if path.endswith(".yaml") or path.endswith(".yml"):
             return yaml.safe_load(f)
         return json.load(f)
@@ -604,7 +604,7 @@ def build_locale(locale, templates, all_snippets):
             out_dir = os.path.join(SITE_DIR, locale, snippet["category"])
         os.makedirs(out_dir, exist_ok=True)
         out_path = os.path.join(out_dir, f"{snippet['slug']}.html")
-        with open(out_path, "w", newline="") as f:
+        with open(out_path, "w", newline="", encoding="utf-8") as f:
             f.write(html_content)
 
     print(f"Generated {len(all_snippets)} HTML files for {locale}")
@@ -622,7 +622,7 @@ def build_locale(locale, templates, all_snippets):
         else os.path.join(SITE_DIR, locale, "data")
     )
     os.makedirs(data_dir, exist_ok=True)
-    with open(os.path.join(data_dir, "snippets.json"), "w") as f:
+    with open(os.path.join(data_dir, "snippets.json"), "w", encoding="utf-8") as f:
         json.dump(snippets_list, f, indent=2, ensure_ascii=False)
         f.write("\n")
     print(f"Rebuilt data/snippets.json for {locale} with {len(snippets_list)} entries")
@@ -655,7 +655,7 @@ def build_locale(locale, templates, all_snippets):
         index_dir = os.path.join(SITE_DIR, locale)
         os.makedirs(index_dir, exist_ok=True)
         index_path = os.path.join(index_dir, "index.html")
-    with open(index_path, "w") as f:
+    with open(index_path, "w", encoding="utf-8") as f:
         f.write(index_html)
     print(f"Generated index.html for {locale} with {len(all_snippets)} cards")
 
@@ -667,7 +667,7 @@ def build_locale(locale, templates, all_snippets):
 def load_templates():
     """Load all HTML templates."""
     def _read(path):
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             return f.read()
     return {
         "page": _read("templates/slug-template.html"),

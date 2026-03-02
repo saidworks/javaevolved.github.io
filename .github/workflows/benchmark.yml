@@ -44,7 +44,7 @@ jobs:
           OG_AOT="html-generators/generateog.aot"
           STEADY_RUNS=5
 
-          snippet_count=$(find content -name '*.json' | wc -l | tr -d ' ')
+          snippet_count=$(find content \( -name '*.json' -o -name '*.yaml' -o -name '*.yml' \) -not -name 'template.*' | wc -l | tr -d ' ')
           java_ver=$(java -version 2>&1 | head -1 | sed 's/.*"\(.*\)".*/\1/')
           os_name="${{ matrix.os }}"
 
@@ -232,7 +232,7 @@ jobs:
         run: |
           os_name="${{ matrix.os }}"
           java_ver=$(java -version 2>&1 | head -1 | sed 's/.*"\(.*\)".*/\1/')
-          snippet_count=$(find content -name '*.json' | wc -l | tr -d ' ')
+          snippet_count=$(find content \( -name '*.json' -o -name '*.yaml' -o -name '*.yml' \) -not -name 'template.*' | wc -l | tr -d ' ')
 
           measure() {
             TIMEFORMAT='%R'

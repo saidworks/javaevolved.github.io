@@ -98,7 +98,7 @@ MAX_CODE_FONT = 16
 
 def load_properties(path):
     props = OrderedDict()
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line or line.startswith("#"):
@@ -113,7 +113,7 @@ CATEGORY_DISPLAY = load_properties(CATEGORIES_FILE)
 
 
 def read_auto(path):
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         if path.endswith((".yaml", ".yml")):
             if yaml is None:
                 raise ImportError("PyYAML is required for YAML files: pip install pyyaml")
@@ -320,7 +320,7 @@ def main():
 
         svg = generate_svg(data)
         svg_path = os.path.join(out_dir, f"{slug}.svg")
-        with open(svg_path, "w") as f:
+        with open(svg_path, "w", encoding="utf-8") as f:
             f.write(svg)
 
         png_path = os.path.join(out_dir, f"{slug}.png")
