@@ -8,8 +8,9 @@ on:
       - 'translations/**'
       - 'templates/**'
       - 'site/**'
+      - 'html-generators/generateog.java'
   workflow_run:
-    workflows: ['Build Generator JAR']
+    workflows: ['Build Generator JARs']
     types: [completed]
     branches: [main]
   workflow_dispatch:
@@ -35,7 +36,7 @@ jobs:
           distribution: 'temurin'
           java-version: '25'
 
-      - name: Restore cached JAR and AOT
+      - name: Restore cached generate JAR and AOT
         id: cache-restore
         uses: actions/cache/restore@v5
         with:
@@ -44,7 +45,7 @@ jobs:
             html-generators/generate.aot
           key: generator-${{ hashFiles('html-generators/generate.java') }}
 
-      - name: Generate with cached JAR + AOT
+      - name: Generate HTML with cached JAR + AOT
         if: steps.cache-restore.outputs.cache-hit == 'true'
         run: java -XX:AOTCache=html-generators/generate.aot -jar html-generators/generate.jar
 
@@ -52,9 +53,32 @@ jobs:
         if: steps.cache-restore.outputs.cache-hit != 'true'
         uses: jbangdev/setup-jbang@main
 
-      - name: Generate with JBang (cache miss)
+      - name: Generate HTML with JBang (cache miss)
         if: steps.cache-restore.outputs.cache-hit != 'true'
         run: jbang html-generators/generate.java
+
+      - name: Restore cached generateog JAR and AOT
+        id: cache-restore-og
+        uses: actions/cache/restore@v5
+        with:
+          path: |
+            html-generators/generateog.jar
+            html-generators/generateog.aot
+          key: generateog-${{ hashFiles('html-generators/generateog.java') }}
+
+      - name: Generate OG cards with cached JAR + AOT
+        if: steps.cache-restore-og.outputs.cache-hit == 'true'
+        run: java -XX:AOTCache=html-generators/generateog.aot -jar html-generators/generateog.jar
+
+      - name: Generate OG cards with JBang (cache miss)
+        if: steps.cache-restore-og.outputs.cache-hit != 'true'
+        run: |
+          if ! command -v jbang &> /dev/null; then
+            echo "Installing JBang..."
+            curl -Ls https://sh.jbang.dev | bash -s - app setup
+            export PATH="$HOME/.jbang/bin:$PATH"
+          fi
+          jbang html-generators/generateog.java
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

@@ -26,3 +26,8 @@ html-generators/generate.aot
 html-generators/generate.jar
 html-generators/generate.jsa
 html-generators/generate.classlist
+html-generators/generateog.aot
+html-generators/generateog.jar
+
+# Generated OG social preview SVGs (built by html-generators/generateog.java)
+site/og/
