@@ -136,8 +136,8 @@ static void svgToPng(String svgContent, Path pngPath) throws Exception {
     var input = new TranscoderInput(new java.io.StringReader(svgContent));
     try (var out = new java.io.BufferedOutputStream(Files.newOutputStream(pngPath))) {
         var transcoder = new PNGTranscoder();
-        transcoder.addTranscodingHint(PNGTranscoder.KEY_WIDTH, (float) W);
-        transcoder.addTranscodingHint(PNGTranscoder.KEY_HEIGHT, (float) H);
+        transcoder.addTranscodingHint(PNGTranscoder.KEY_WIDTH, (float) W * 2);
+        transcoder.addTranscodingHint(PNGTranscoder.KEY_HEIGHT, (float) H * 2);
         transcoder.transcode(input, new TranscoderOutput(out));
     }
 }
