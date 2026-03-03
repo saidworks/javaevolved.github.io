@@ -38,7 +38,7 @@ modernCode: |-
           var strlenSig = FunctionDescriptor.of(ValueLayout.JAVA_LONG, ValueLayout.ADDRESS);
           var strlenMethod = Linker.nativeLinker() .downcallHandle(foreignFuncAddr, strlenSig);
           var ret = (long) strlenMethod.invokeExact(arena.allocateFrom("Bambi"));
-          IO.println("Return value " + ret); // 5
+          System.out.println("Return value " + ret); // 5
       }
   }
 
