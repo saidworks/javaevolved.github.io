@@ -11,20 +11,23 @@ oldApproach: "JNI (Java Native Interface)"
 modernApproach: "FFM (Foreign Function & Memory API)"
 oldCode: |-
   public class CallCFromJava {
-      static { System.loadLibrary("hello-jni"); }
-      public static native int greet(String name);
+      static { System.loadLibrary("strlen-jni"); }
+      public static native long strlen(String s);
       public static void main(String[] args) {
-          int ret = greet("Bambi");
-          System.out.println("Return value " + ret);
+          long ret = strlen("Bambi");
+          System.out.println("Return value " + ret); // 5
       }
   }
 
   // Run javac -h to generate the .h file, then write C:
-  // JNIEXPORT int JNICALL Java_CallCFromJava_greet(
+  // #include "CallCFromJava.h"
+  // #include <string.h>
+  // JNIEXPORT jlong JNICALL Java_CallCFromJava_strlen(
   //     JNIEnv *env, jclass clazz, jstring str) {
-  //     const char* name = (*env)->GetStringUTFChars(env, str, NULL);
-  //     printf("Hello %s\n", name);
-  //     return 0;
+  //     const char* s = (*env)->GetStringUTFChars(env, str, NULL);
+  //     jlong len = (jlong) strlen(s);
+  //     (*env)->ReleaseStringUTFChars(env, str, s);
+  //     return len;
   // }
 modernCode: |-
   void main() throws Throwable {
