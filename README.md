@@ -61,6 +61,7 @@ The site supports 11 languages: English, Deutsch, Español, Português (Brasil),
 ### Prerequisites
 
 - **Java 25+** (e.g. [Temurin](https://adoptium.net/))
+- **JBang** ([Jbang](https://www.jbang.dev/))
 
 ### Generate and serve
 
@@ -68,8 +69,8 @@ The site supports 11 languages: English, Deutsch, Español, Português (Brasil),
 # Generate all HTML pages and data/snippets.json into site/
 jbang html-generators/generate.java
 
-# Serve locally
-jwebserver -b 0.0.0.0 -d site -p 8090
+# Serve locally need to replace path with absolute path to site folder 
+jwebserver -b 0.0.0.0 -d path/to/site -p 8090
 # Open http://localhost:8090
 ```
 
